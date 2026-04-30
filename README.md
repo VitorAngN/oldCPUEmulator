@@ -17,7 +17,7 @@ O emulador reproduz o comportamento físico de um sistema da década de 70, impl
 - **Display & Graphics:** Matriz de vídeo de 64x32 pixels renderizada no terminal (via XOR sprites).
 - **Input:** Mapeamento de teclado hexadecimal (16 teclas) capturado via API do Windows.
 
-## ⚙️ O Ciclo da CPU (Fetch, Decode, Execute)
+## O Ciclo da CPU (Fetch, Decode, Execute)
 
 O coração deste emulador reside no seu laço principal, que obedece estritamente ao ciclo clássico de um processador:
 
