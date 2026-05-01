@@ -47,7 +47,7 @@ g++ emulador.cpp -o emulador.exe
 ./emulador.exe
 ```
 
-## 👨‍💻 Autor
+## Autor
 
 Desenvolvido por **João Vitor Angelim Nogueira**.  
 Estudante de Engenharia da Computação buscando aprofundar-se desde o "escovador de bits" até arquiteturas distribuídas complexas.
