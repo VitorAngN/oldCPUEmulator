@@ -1,4 +1,4 @@
-# 🕹️ CHIP-8 CPU Emulator (C++)
+# CHIP-8 CPU Emulator (C++)
 
 ![C++](https://img.shields.io/badge/Language-C++-00599C?style=for-the-badge&logo=c%2B%2B)
 ![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
@@ -23,7 +23,7 @@ O emulador reproduz o comportamento físico de um sistema da década de 70, impl
 - **Display & Graphics:** Matriz de vídeo de 64x32 pixels renderizada no terminal (via XOR sprites).
 - **Input:** Mapeamento de teclado hexadecimal (16 teclas) capturado via API do Windows.
 
-## ⚙️ O Ciclo da CPU (Fetch, Decode, Execute)
+## O Ciclo da CPU (Fetch, Decode, Execute)
 
 O coração deste emulador reside no seu laço principal, que obedece estritamente ao ciclo clássico de um processador:
 
@@ -31,7 +31,7 @@ O coração deste emulador reside no seu laço principal, que obedece estritamen
 2. **Decode (Decodificação):** Isola os *nibbles* (blocos de 4 bits) usando operações bit-a-bit (Bitwise AND/Shift) para determinar qual instrução o software deseja executar.
 3. **Execute (Execução):** Baseado na instrução decodificada, realiza cálculos matemáticos (soma, subtração, bitwise AND/OR/XOR), manipulações de memória, saltos condicionais ou rotinas de desenho de pixels.
 
-## 🚀 Como Rodar
+## Como Rodar
 
 1. Clone o repositório:
 ```bash
@@ -53,7 +53,7 @@ g++ emulador.cpp -o emulador.exe
 ./emulador.exe
 ```
 
-## 👨‍💻 Autor
+## Autor
 
 Desenvolvido por **João Vitor Angelim Nogueira**.  
 Estudante de Engenharia da Computação buscando aprofundar-se desde o "escovador de bits" até arquiteturas distribuídas complexas.
