@@ -5,6 +5,12 @@
 
 A fully functional CHIP-8 CPU emulator developed entirely from scratch in C++. This project was built to deepen my understanding of computer architecture, low-level programming, and how software interacts with hardware components like memory, registers, and the CPU clock.
 
+<p align="center">
+  <img src="rodando.png" alt="Emulador CHIP-8 executando Pong no terminal" width="600"/>
+  <br/>
+  <em>Emulador executando a ROM do Pong — renderização via terminal com XOR sprites</em>
+</p>
+
 ## 🧠 Arquitetura e Componentes
 
 O emulador reproduz o comportamento físico de um sistema da década de 70, implementando os seguintes componentes em software:

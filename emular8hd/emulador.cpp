@@ -406,7 +406,7 @@ int main(){
     ligarEmulador(emulador);
 
 
-    if (carregarROM(emulador, "Tetris.ch8") == 0) {
+    if (carregarROM(emulador, "pong.ch8") == 0) {
             // Se erro, limpa a memoria e finaliza o programa.
             free(emulador);
             return 1; 
