@@ -1,0 +1,19 @@
+# Compilação e Binários
+*.exe
+*.o
+*.obj
+*.out
+
+# Pastas de Build
+build/
+bin/
+obj/
+
+# Arquivos Temporários e VS Code
+.vscode/
+.idea/
+*.log
+*.zip
+
+# Outros
+tempCodeRunnerFile.cpp

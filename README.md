@@ -1,59 +1,62 @@
-# CHIP-8 CPU Emulator (C++)
+# Emulador CHIP-8 Profissional (C++ & Win32 API)
+
+[![en](https://img.shields.io/badge/lang-en-red.svg)](README-en.md)
+[![pt-br](https://img.shields.io/badge/lang-pt--br-green.svg)](README.md)
 
 ![C++](https://img.shields.io/badge/Language-C++-00599C?style=for-the-badge&logo=c%2B%2B)
+![Win32 API](https://img.shields.io/badge/Graphics-Win32_API-0078D7?style=for-the-badge&logo=windows)
 ![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
 
-A fully functional CHIP-8 CPU emulator developed entirely from scratch in C++. This project was built to deepen my understanding of computer architecture, low-level programming, and how software interacts with hardware components like memory, registers, and the CPU clock.
+Um emulador completo da CPU CHIP-8 (sistema da década de 70) desenvolvido do zero em C++ moderno. 
+Este projeto foi construído para demonstrar profundidade técnica em engenharia de software, saindo do nível de scripting procedural para uma arquitetura orientada a objetos (OOP) totalmente desacoplada.
+
+**O diferencial técnico:** A renderização gráfica e o input não utilizam bibliotecas prontas como SDL2 ou SFML. O emulador "conversa" diretamente com o sistema operacional através da **Win32 API nativa** (`<windows.h>`), desenhando pixels diretamente na placa de vídeo, garantindo zero dependências externas para compilação.
 
 <p align="center">
-  <img src="rodando.png" alt="Emulador CHIP-8 executando Pong no terminal" width="600"/>
+  <img src="rodando.png" alt="Emulador CHIP-8 executando Pong" width="600"/>
   <br/>
-  <em>Emulador executando a ROM do Pong — renderização via terminal com XOR sprites</em>
+  <em>Nota: Você pode adicionar aqui um print da nova janela gráfica executando o jogo!</em>
 </p>
 
-## 🧠 Arquitetura e Componentes
+## 🧠 Arquitetura e Engenharia
 
-O emulador reproduz o comportamento físico de um sistema da década de 70, implementando os seguintes componentes em software:
+O projeto foi dividido em dois domínios principais (desacoplamento):
 
-- **Memória RAM:** 4KB (4096 bytes) de memória simulada.
-- **Registradores:** 16 registradores de propósito geral de 8-bits (`V0` a `VF`).
-- **Registrador de Índice:** 1 registrador de 16-bits (`I`) para leitura de memória.
-- **Program Counter (PC) & Stack:** Controle de fluxo de execução e pilha para suporte a sub-rotinas (16 níveis).
-- **Timers:** Implementação de Delay Timer e Sound Timer operando a 60Hz.
-- **Display & Graphics:** Matriz de vídeo de 64x32 pixels renderizada no terminal (via XOR sprites).
-- **Input:** Mapeamento de teclado hexadecimal (16 teclas) capturado via API do Windows.
+1. **Domínio da CPU (`Chip8.cpp` & `Chip8.hpp`)**: 
+   - Focado exclusivamente em emular os barramentos de hardware. Nenhuma linha de código aqui sabe da existência de uma janela ou teclado físico.
+   - **Memória RAM:** 4KB (4096 bytes).
+   - **Registradores:** 16 registradores de uso geral (V0 a VF) + Registrador de Índice de 16-bits (I).
+   - **Timers:** Sistema de interrupção simulado para *Delay* e *Sound* a 60Hz.
 
-## O Ciclo da CPU (Fetch, Decode, Execute)
+2. **Domínio de Interface (`main.cpp`)**:
+   - Integração com o SO via Win32 API.
+   - Criação da janela via `CreateWindowEx`.
+   - Processamento contínuo da fila de mensagens do Windows (`PeekMessage` e `DispatchMessage`).
+   - Sincronização de clock: A CPU roda a aproximadamente 300Hz, enquanto o desenho na tela e os timers são sincronizados a 60Hz.
 
-O coração deste emulador reside no seu laço principal, que obedece estritamente ao ciclo clássico de um processador:
+## Como Compilar e Rodar
 
-1. **Fetch (Busca):** Lê o *opcode* (instrução de 16 bits) a partir do endereço de memória apontado pelo *Program Counter*.
-2. **Decode (Decodificação):** Isola os *nibbles* (blocos de 4 bits) usando operações bit-a-bit (Bitwise AND/Shift) para determinar qual instrução o software deseja executar.
-3. **Execute (Execução):** Baseado na instrução decodificada, realiza cálculos matemáticos (soma, subtração, bitwise AND/OR/XOR), manipulações de memória, saltos condicionais ou rotinas de desenho de pixels.
-
-## Como Rodar
+Não é necessário instalar ferramentas complexas ou o CMake. Basta ter o compilador G++ (MinGW) no seu Windows.
 
 1. Clone o repositório:
 ```bash
 git clone https://github.com/VitorAngN/oldCPUEmulator.git
-```
-
-2. Entre na pasta do código:
-```bash
 cd oldCPUEmulator/emular8hd
 ```
 
-3. Compile o arquivo fonte usando G++ (MinGW no Windows):
+2. Compile usando o script otimizado que já lida com a linkagem da GDI32:
 ```bash
-g++ emulador.cpp -o emulador.exe
+# Ou simplesmente dê dois cliques no arquivo build.bat pelo Windows Explorer
+.\build.bat
 ```
 
-4. Execute o programa (certifique-se de que há uma rom como `pong.ch8` configurada no código):
+3. Execute passando a ROM desejada como argumento:
 ```bash
-./emulador.exe
+chip8_emulator.exe pong.ch8
 ```
+*(Se você não passar nenhum argumento, ele tentará carregar `pong.ch8` automaticamente).*
 
 ## Autor
 
 Desenvolvido por **João Vitor Angelim Nogueira**.  
-Estudante de Engenharia da Computação buscando aprofundar-se desde o "escovador de bits" até arquiteturas distribuídas complexas.
+Estudante de Engenharia da Computação focado em Engenharia de Software, Backend e DevOps, buscando aprofundar-se desde o "escovador de bits" até arquiteturas distribuídas e infraestrutura robusta.
