@@ -1,62 +1,67 @@
-# Emulador CHIP-8 Profissional (C++ & Win32 API)
+# CHIP-8 CPU Emulator
 
-[![en](https://img.shields.io/badge/lang-en-red.svg)](README-en.md)
-[![pt-br](https://img.shields.io/badge/lang-pt--br-green.svg)](README.md)
-
-![C++](https://img.shields.io/badge/Language-C++-00599C?style=for-the-badge&logo=c%2B%2B)
-![Win32 API](https://img.shields.io/badge/Graphics-Win32_API-0078D7?style=for-the-badge&logo=windows)
-![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
-
-Um emulador completo da CPU CHIP-8 (sistema da década de 70) desenvolvido do zero em C++ moderno. 
-Este projeto foi construído para demonstrar profundidade técnica em engenharia de software, saindo do nível de scripting procedural para uma arquitetura orientada a objetos (OOP) totalmente desacoplada.
-
-**O diferencial técnico:** A renderização gráfica e o input não utilizam bibliotecas prontas como SDL2 ou SFML. O emulador "conversa" diretamente com o sistema operacional através da **Win32 API nativa** (`<windows.h>`), desenhando pixels diretamente na placa de vídeo, garantindo zero dependências externas para compilação.
-
-<p align="center">
-  <img src="rodando.png" alt="Emulador CHIP-8 executando Pong" width="600"/>
-  <br/>
-  <em>Nota: Você pode adicionar aqui um print da nova janela gráfica executando o jogo!</em>
+<p>
+  <img src="https://img.shields.io/badge/Status-Concluído-success?style=flat-square" alt="Status" />
+  <img src="https://img.shields.io/badge/C++-00599C?style=flat-square&logo=cplusplus&logoColor=white" alt="C++" />
+  <img src="https://img.shields.io/badge/Win32_API-0078D4?style=flat-square&logo=windows&logoColor=white" alt="Win32 API" />
+  <img src="https://img.shields.io/badge/Dependências_Externas-Zero-gray?style=flat-square" alt="Zero Deps" />
 </p>
 
-## 🧠 Arquitetura e Engenharia
+Emulador completo da arquitetura CHIP-8 implementado em C++ puro, com renderização gráfica via **Win32 API nativa** e sem nenhuma dependência externa (sem SDL, SFML ou OpenGL).
 
-O projeto foi dividido em dois domínios principais (desacoplamento):
+---
 
-1. **Domínio da CPU (`Chip8.cpp` & `Chip8.hpp`)**: 
-   - Focado exclusivamente em emular os barramentos de hardware. Nenhuma linha de código aqui sabe da existência de uma janela ou teclado físico.
-   - **Memória RAM:** 4KB (4096 bytes).
-   - **Registradores:** 16 registradores de uso geral (V0 a VF) + Registrador de Índice de 16-bits (I).
-   - **Timers:** Sistema de interrupção simulado para *Delay* e *Sound* a 60Hz.
+## Motivação
 
-2. **Domínio de Interface (`main.cpp`)**:
-   - Integração com o SO via Win32 API.
-   - Criação da janela via `CreateWindowEx`.
-   - Processamento contínuo da fila de mensagens do Windows (`PeekMessage` e `DispatchMessage`).
-   - Sincronização de clock: A CPU roda a aproximadamente 300Hz, enquanto o desenho na tela e os timers são sincronizados a 60Hz.
+O CHIP-8 é a plataforma ideal para estudar como um processador real funciona: ele é simples o suficiente para ser implementado por completo, mas rico o suficiente para exigir a implementação de todos os componentes fundamentais — memória, registradores, stack de chamadas, timers e I/O.
 
-## Como Compilar e Rodar
+---
 
-Não é necessário instalar ferramentas complexas ou o CMake. Basta ter o compilador G++ (MinGW) no seu Windows.
+## O que foi implementado
 
-1. Clone o repositório:
-```bash
-git clone https://github.com/VitorAngN/oldCPUEmulator.git
-cd oldCPUEmulator/emular8hd
+| Componente | Descrição |
+|---|---|
+| **Ciclo Fetch/Decode/Execute** | Loop principal que lê, decodifica e executa cada opcode de 2 bytes |
+| **4KB de RAM simulada** | Memória endereçável de 0x000 a 0xFFF |
+| **16 Registradores (V0–VF)** | Registradores de uso geral de 8 bits |
+| **Stack de Chamadas (16 níveis)** | Controle de fluxo para chamadas e retornos de subrotinas |
+| **Timers a 60Hz** | Timer de delay e timer de som decrementados na frequência correta |
+| **Teclado Hexadecimal (0x0–0xF)** | Mapeado para teclado convencional |
+| **Display 64×32** | Renderização de sprites via operação XOR, com detecção de colisão |
+| **35 Opcodes** | Implementação completa de todos os opcodes do conjunto de instruções CHIP-8 |
+
+---
+
+## Arquitetura Interna
+
+```
+oldCPUEmulator/
+├── chip8.h / chip8.cpp   # Núcleo do emulador (CPU, memória, timers)
+├── main.cpp              # Loop principal e renderização via Win32 API
+└── ROMs/                 # ROMs de teste (Pong, Tetris, etc.)
 ```
 
-2. Compile usando o script otimizado que já lida com a linkagem da GDI32:
+O emulador foi separado em duas camadas: o **núcleo (`chip8.cpp`)**, que é completamente independente de plataforma e contém toda a lógica de emulação, e o **host (`main.cpp`)**, que é responsável por renderização e captura de input usando a Win32 API.
+
+---
+
+## Como Compilar e Executar
+
+Você precisa do **MSVC** (Visual Studio) ou **MinGW (g++)** no Windows.
+
 ```bash
-# Ou simplesmente dê dois cliques no arquivo build.bat pelo Windows Explorer
-.\build.bat
+# Compilar com g++ (MinGW)
+g++ -o chip8.exe main.cpp chip8.cpp -lgdi32 -mwindows
+
+# Executar com uma ROM
+./chip8.exe ROMs/pong.ch8
 ```
 
-3. Execute passando a ROM desejada como argumento:
-```bash
-chip8_emulator.exe pong.ch8
-```
-*(Se você não passar nenhum argumento, ele tentará carregar `pong.ch8` automaticamente).*
+---
 
-## Autor
+## Referências
 
-Desenvolvido por **João Vitor Angelim Nogueira**.  
-Estudante de Engenharia da Computação focado em Engenharia de Software, Backend e DevOps, buscando aprofundar-se desde o "escovador de bits" até arquiteturas distribuídas e infraestrutura robusta.
+- [Cowgod's CHIP-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM) — especificação completa dos opcodes
+- [Guide to making a CHIP-8 emulator](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/) — guia de implementação
+
+<img src="https://komarev.com/ghpvc/?username=VitorAngN-oldCPUEmulator" width="1" height="1" alt="" />
