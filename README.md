@@ -15,7 +15,7 @@ Este projeto foi construído para demonstrar profundidade técnica em engenharia
 <p align="center">
   <img src="rodando.png" alt="Emulador CHIP-8 executando Pong" width="600"/>
   <br/>
-  <em>Nota: Você pode adicionar aqui um print da nova janela gráfica executando o jogo!</em>
+  <em>Emulador CHIP-8 executando Pong via Win32 API nativa</em>
 </p>
 
 ## 🧠 Arquitetura e Engenharia
