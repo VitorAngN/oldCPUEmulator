@@ -1,4 +1,4 @@
-# Emulador CHIP-8 Profissional (C++ & Win32 API)
+# Emulador CHIP-8 em C++ com Win32 API
 
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README-en.md)
 [![pt-br](https://img.shields.io/badge/lang-pt--br-green.svg)](README.md)
