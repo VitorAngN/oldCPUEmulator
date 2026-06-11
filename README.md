@@ -18,7 +18,7 @@ Este projeto foi construído para demonstrar profundidade técnica em engenharia
   <em>Emulador CHIP-8 executando Pong via Win32 API nativa</em>
 </p>
 
-## 🧠 Arquitetura e Engenharia
+## Arquitetura e Engenharia
 
 O projeto foi dividido em dois domínios principais (desacoplamento):
 
