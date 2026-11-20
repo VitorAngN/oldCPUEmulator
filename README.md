@@ -5,7 +5,7 @@
 
 ![C++](https://img.shields.io/badge/Language-C++-00599C?style=for-the-badge&logo=c%2B%2B)
 ![Win32 API](https://img.shields.io/badge/Graphics-Win32_API-0078D7?style=for-the-badge&logo=windows)
-![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
+[![CI](https://github.com/VitorAngN/oldCPUEmulator/actions/workflows/ci.yml/badge.svg)](https://github.com/VitorAngN/oldCPUEmulator/actions/workflows/ci.yml)
 
 Um emulador completo da CPU CHIP-8 (sistema da década de 70) desenvolvido do zero em C++ moderno. 
 Este projeto foi construído para demonstrar profundidade técnica em engenharia de software, saindo do nível de scripting procedural para uma arquitetura orientada a objetos (OOP) totalmente desacoplada.
@@ -55,6 +55,24 @@ cd oldCPUEmulator/emular8hd
 chip8_emulator.exe pong.ch8
 ```
 *(Se você não passar nenhum argumento, ele tentará carregar `pong.ch8` automaticamente).*
+
+## Testes
+
+O núcleo da CPU (`Chip8.cpp`) não depende do Windows, então é testado em qualquer sistema. Os testes em `tests/test_chip8.cpp` montam pequenos programas em memória, executam alguns ciclos e conferem registradores, memória e tela: aritmética com flags, saltos e sub-rotinas, BCD, fonte, desenho com colisão e recorte, timers e espera de tecla.
+
+```bash
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+O GitHub Actions roda os testes no Linux com AddressSanitizer/UBSan (detectam acesso fora da memória) e compila o emulador completo no Windows com MinGW.
+
+### Bugs encontrados e corrigidos pelos testes
+- **Frames perdidos:** `drawFlag` era zerado a cada ciclo; como o loop executa 4 ciclos por frame, um desenho no 1º ciclo era esquecido.
+- **Flag sobrescrita:** em `8XY4/5/6/7/E` com `X = F`, a flag era gravada antes do resultado e se perdia.
+- **Sprite vazando:** pixels além da coluna 63 apareciam no começo da linha de baixo; agora o sprite é recortado na borda.
+- **Acesso fora da memória:** pilha sem limite (`2NNN` com 16 chamadas, `00EE` com pilha vazia) e endereços de `I` acima de `0xFFF` agora são protegidos.
 
 ## Autor
 

@@ -3,7 +3,7 @@ echo ========================================================
 echo   Compilando Emulador CHIP-8 (API Win32)
 echo ========================================================
 
-g++ main.cpp Chip8.cpp -std=c++11 -lgdi32 -O3 -o chip8_emulator.exe
+g++ main.cpp Chip8.cpp -std=c++17 -lgdi32 -O3 -o chip8_emulator.exe
 
 if %ERRORLEVEL% equ 0 (
     echo.

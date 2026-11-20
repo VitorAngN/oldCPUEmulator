@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  testes:
+    name: Testes do núcleo (Linux, com sanitizers)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
+      - name: Compilar
+        run: cmake --build build
+      - name: Testar
+        run: ctest --test-dir build --output-on-failure
+
+  windows:
+    name: Build do emulador (Windows + MinGW)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compilar com g++ (mesmo comando do build.bat)
+        shell: bash
+        working-directory: emular8hd
+        run: g++ main.cpp Chip8.cpp -std=c++17 -O2 -lgdi32 -o chip8_emulator.exe
+      - name: Compilar e rodar os testes
+        shell: bash
+        run: |
+          g++ -std=c++17 emular8hd/Chip8.cpp tests/test_chip8.cpp -o chip8_tests.exe
+          ./chip8_tests.exe

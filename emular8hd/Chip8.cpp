@@ -51,16 +51,21 @@ bool Chip8::loadROM(const std::string& filename) {
         return false;
     }
 
-    std::streampos size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    if (size > (4096 - 0x200)) {
-        std::cerr << "Erro: ROM muito grande!" << std::endl;
+    std::streamoff size = file.tellg();
+    if (size <= 0 || size > (4096 - 0x200)) {
+        std::cerr << "Erro: ROM vazia ou muito grande!" << std::endl;
         return false;
     }
 
+    file.seekg(0, std::ios::beg);
     file.read(reinterpret_cast<char*>(&memory[0x200]), size);
     std::cout << "ROM carregada com sucesso! Tamanho: " << size << " bytes." << std::endl;
+    return true;
+}
+
+bool Chip8::loadProgram(const uint8_t* data, std::size_t size) {
+    if (size == 0 || size > (4096 - 0x200)) return false;
+    std::memcpy(&memory[0x200], data, size);
     return true;
 }
 
@@ -77,8 +82,8 @@ void Chip8::updateTimers() {
 
 void Chip8::emulateCycle() {
     // 1. Fetch do Opcode (Lê 2 bytes)
-    uint16_t opcode = (memory[pc] << 8) | memory[pc + 1];
-    pc += 2;
+    uint16_t opcode = (memory[pc & 0xFFF] << 8) | memory[(pc + 1) & 0xFFF];
+    pc = (pc + 2) & 0xFFF;
 
     // Variaveis de Decode
     uint8_t X = (opcode & 0x0F00) >> 8;
@@ -87,7 +92,9 @@ void Chip8::emulateCycle() {
     uint8_t NN = (opcode & 0x00FF);
     uint16_t NNN = (opcode & 0x0FFF);
 
-    drawFlag = false;
+    // drawFlag NÃO é zerado aqui: o loop principal roda vários ciclos por frame
+    // e só limpa a flag depois de desenhar. Antes, um desenho no 1º ciclo era
+    // "esquecido" pelos ciclos seguintes e o frame não aparecia.
 
     // 2. Decode & Execute
     switch (opcode & 0xF000) {
@@ -97,7 +104,8 @@ void Chip8::emulateCycle() {
                 std::memset(display, 0, sizeof(display));
                 drawFlag = true;
             } else if (opcode == 0x00EE) {
-                // Return from subroutine
+                // Return from subroutine (ignora retorno com pilha vazia)
+                if (sp == 0) break;
                 --sp;
                 pc = stack[sp];
             }
@@ -109,7 +117,8 @@ void Chip8::emulateCycle() {
             break;
 
         case 0x2000:
-            // Call subroutine at NNN
+            // Call subroutine at NNN (pilha de 16 níveis: evita escrever fora do array)
+            if (sp >= 16) break;
             stack[sp] = pc;
             ++sp;
             pc = NNN;
@@ -146,28 +155,38 @@ void Chip8::emulateCycle() {
                 case 0x0001: V[X] |= V[Y]; break;
                 case 0x0002: V[X] &= V[Y]; break;
                 case 0x0003: V[X] ^= V[Y]; break;
+                // Nas operações abaixo o resultado é gravado ANTES da flag em VF.
+                // Assim, se X == F, VF termina com a flag (comportamento correto).
                 case 0x0004: {
                     uint16_t sum = V[X] + V[Y];
-                    V[0xF] = (sum > 255) ? 1 : 0; // Carry flag
                     V[X] = sum & 0xFF;
+                    V[0xF] = (sum > 255) ? 1 : 0; // Carry flag
                     break;
                 }
-                case 0x0005:
-                    V[0xF] = (V[X] >= V[Y]) ? 1 : 0; // No borrow flag
+                case 0x0005: {
+                    uint8_t flag = (V[X] >= V[Y]) ? 1 : 0; // No borrow flag
                     V[X] -= V[Y];
+                    V[0xF] = flag;
                     break;
-                case 0x0006:
-                    V[0xF] = V[X] & 0x1;
+                }
+                case 0x0006: {
+                    uint8_t flag = V[X] & 0x1;
                     V[X] >>= 1;
+                    V[0xF] = flag;
                     break;
-                case 0x0007:
-                    V[0xF] = (V[Y] >= V[X]) ? 1 : 0;
+                }
+                case 0x0007: {
+                    uint8_t flag = (V[Y] >= V[X]) ? 1 : 0;
                     V[X] = V[Y] - V[X];
+                    V[0xF] = flag;
                     break;
-                case 0x000E:
-                    V[0xF] = (V[X] & 0x80) >> 7;
+                }
+                case 0x000E: {
+                    uint8_t flag = (V[X] & 0x80) >> 7;
                     V[X] <<= 1;
+                    V[0xF] = flag;
                     break;
+                }
             }
             break;
 
@@ -183,7 +202,7 @@ void Chip8::emulateCycle() {
 
         case 0xB000:
             // Jump to NNN + V[0]
-            pc = NNN + V[0];
+            pc = (NNN + V[0]) & 0xFFF;
             break;
 
         case 0xC000:
@@ -199,18 +218,18 @@ void Chip8::emulateCycle() {
 
             V[0xF] = 0; // Colision flag reset
 
-            for (unsigned int row = 0; row < height; ++row) {
-                uint8_t spriteByte = memory[I + row];
+            for (unsigned int row = 0; row < height && (y + row) < kHeight; ++row) {
+                uint8_t spriteByte = memory[(I + row) & 0xFFF];
 
-                for (unsigned int col = 0; col < 8; ++col) {
+                // Recorta na borda direita: antes, os pixels que passavam da
+                // coluna 63 "vazavam" para o começo da linha de baixo.
+                for (unsigned int col = 0; col < 8 && (x + col) < kWidth; ++col) {
                     if ((spriteByte & (0x80 >> col)) != 0) {
-                        int index = (x + col) + ((y + row) * 64);
-                        if (index < 64 * 32) {
-                            if (display[index] == 1) {
-                                V[0xF] = 1; // Colidiu
-                            }
-                            display[index] ^= 1;
+                        int index = (x + col) + ((y + row) * kWidth);
+                        if (display[index] == 1) {
+                            V[0xF] = 1; // Colidiu
                         }
+                        display[index] ^= 1;
                     }
                 }
             }
@@ -220,9 +239,9 @@ void Chip8::emulateCycle() {
 
         case 0xE000:
             if (NN == 0x9E) {
-                if (keypad[V[X]] != 0) pc += 2;
+                if (keypad[V[X] & 0xF] != 0) pc += 2;
             } else if (NN == 0xA1) {
-                if (keypad[V[X]] == 0) pc += 2;
+                if (keypad[V[X] & 0xF] == 0) pc += 2;
             }
             break;
 
@@ -257,22 +276,22 @@ void Chip8::emulateCycle() {
                     break;
                 case 0x29:
                     // I aponta para o caractere font (5 bytes de altura)
-                    I = 0x50 + (V[X] * 5); 
+                    I = 0x50 + ((V[X] & 0xF) * 5);
                     break;
                 case 0x33:
                     // Guarda representação BCD
-                    memory[I] = V[X] / 100;
-                    memory[I + 1] = (V[X] / 10) % 10;
-                    memory[I + 2] = V[X] % 10;
+                    memory[I & 0xFFF] = V[X] / 100;
+                    memory[(I + 1) & 0xFFF] = (V[X] / 10) % 10;
+                    memory[(I + 2) & 0xFFF] = V[X] % 10;
                     break;
                 case 0x55:
                     for (int i = 0; i <= X; ++i) {
-                        memory[I + i] = V[i];
+                        memory[(I + i) & 0xFFF] = V[i];
                     }
                     break;
                 case 0x65:
                     for (int i = 0; i <= X; ++i) {
-                        V[i] = memory[I + i];
+                        V[i] = memory[(I + i) & 0xFFF];
                     }
                     break;
             }

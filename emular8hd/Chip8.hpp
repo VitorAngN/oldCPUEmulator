@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <random>
@@ -10,6 +11,9 @@ public:
     
     // Inicializa o emulador e carrega a ROM
     bool loadROM(const std::string& filename);
+
+    // Carrega um programa direto da memória (usado pelos testes)
+    bool loadProgram(const uint8_t* data, std::size_t size);
     
     // Executa um ciclo da CPU (Fetch, Decode, Execute)
     void emulateCycle();
@@ -20,8 +24,18 @@ public:
     // Acesso aos gráficos e estados para a UI
     const uint8_t* getDisplay() const { return display; }
     
-    // Setter do estado do teclado (0-F) a partir da interface SDL
+    // Setter do estado do teclado (0-F) a partir da interface Win32
     void setKeys(const uint8_t* keys);
+
+    // Leitura do estado interno (somente leitura, usada nos testes)
+    uint8_t getV(int index) const { return V[index & 0xF]; }
+    uint16_t getI() const { return I; }
+    uint16_t getPC() const { return pc; }
+    uint8_t getDelayTimer() const { return delayTimer; }
+    uint8_t peek(uint16_t address) const { return memory[address & 0xFFF]; }
+
+    static constexpr int kWidth = 64;
+    static constexpr int kHeight = 32;
 
     // Flags para o sistema principal
     bool drawFlag; 
