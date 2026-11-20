@@ -17,3 +17,7 @@ obj/
 
 # Outros
 tempCodeRunnerFile.cpp
+
+# CMake
+build/
+cmake-build-*/

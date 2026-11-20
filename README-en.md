@@ -5,7 +5,7 @@
 
 ![C++](https://img.shields.io/badge/Language-C++-00599C?style=for-the-badge&logo=c%2B%2B)
 ![Win32 API](https://img.shields.io/badge/Graphics-Win32_API-0078D7?style=for-the-badge&logo=windows)
-![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
+[![CI](https://github.com/VitorAngN/oldCPUEmulator/actions/workflows/ci.yml/badge.svg)](https://github.com/VitorAngN/oldCPUEmulator/actions/workflows/ci.yml)
 
 A fully functional CHIP-8 CPU emulator developed from scratch in modern C++.
 This project was built to showcase technical depth in software engineering, moving from a single procedural script to a fully decoupled Object-Oriented Programming (OOP) architecture.
@@ -55,6 +55,16 @@ cd oldCPUEmulator/emular8hd
 chip8_emulator.exe pong.ch8
 ```
 *(If no argument is passed, it will automatically attempt to load `pong.ch8`).*
+
+## Tests
+
+The CPU core (`Chip8.cpp`) has no Windows dependency, so it is tested on any OS. `tests/test_chip8.cpp` loads tiny programs into memory, runs a few cycles and checks registers, memory and the screen.
+
+```bash
+cmake -S . -B build && cmake --build build && ctest --test-dir build --output-on-failure
+```
+
+GitHub Actions runs the tests on Linux with AddressSanitizer/UBSan and builds the full emulator on Windows with MinGW. The tests caught and fixed four bugs: lost frames (`drawFlag` reset every cycle), the VF flag being overwritten when `X = F`, sprites wrapping into the next row instead of clipping, and out-of-bounds stack/memory access.
 
 ## Author
 
