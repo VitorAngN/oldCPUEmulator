@@ -41,7 +41,7 @@ jobs:
 
       - name: Montar o site
         run: |
-          cp site/index.html site/app.js _site/
+          cp site/index.html site/og.png site/app.js _site/
           mkdir -p _site/roms
           cp web/roms/*.ch8 _site/roms/
 
