@@ -7,6 +7,8 @@
 ![Win32 API](https://img.shields.io/badge/Graphics-Win32_API-0078D7?style=for-the-badge&logo=windows)
 [![CI](https://github.com/VitorAngN/oldCPUEmulator/actions/workflows/ci.yml/badge.svg)](https://github.com/VitorAngN/oldCPUEmulator/actions/workflows/ci.yml)
 
+**[Jogar no navegador](https://vitorangn.github.io/oldCPUEmulator/)**: o mesmo núcleo em C++ compilado para WebAssembly, com Pong, Tetris, Brix e outros clássicos.
+
 Um emulador completo da CPU CHIP-8 (sistema da década de 70) desenvolvido do zero em C++ moderno. 
 Este projeto foi construído para demonstrar profundidade técnica em engenharia de software, saindo do nível de scripting procedural para uma arquitetura orientada a objetos (OOP) totalmente desacoplada.
 

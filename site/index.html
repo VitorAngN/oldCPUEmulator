@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emulador CHIP-8 — João Vitor Angelim Nogueira</title>
+<meta name="description" content="Emulador CHIP-8 escrito do zero em C++ e compilado para WebAssembly. Jogue Pong, Tetris, Brix e outros clássicos no navegador.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: light dark; --bg:#ffffff; --soft:#f6f8fb; --card:#ffffff; --line:#e5e9f0; --txt:#1f2937; --title:#111827; --muted:#6b7280; --acc:#1e3a5f; --link:#2563eb; --chip:#eef2f7; --chip-hover:#e1e8f1; --acc-hover:#16304f; --code:#f1f4f9; --shadow:0 4px 16px rgba(16,24,40,.06); }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f1115; --soft:#151922; --card:#1a1f29; --line:#2a313d; --txt:#e5e7eb; --title:#f3f4f6; --muted:#9ca3af; --acc:#3b6ea8; --link:#7aa7ff; --chip:#232b38; --chip-hover:#2d3747; --acc-hover:#4a7fbd; --code:#232a36; --shadow:0 4px 16px rgba(0,0,0,.35); }
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--txt); line-height:1.6; }
+  a { color:var(--link); text-decoration:none; } a:hover { text-decoration:underline; }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 24px; }
+  nav { background:var(--bg); position:sticky; top:0; z-index:10; box-shadow:0 1px 0 rgba(0,0,0,.04), 0 2px 12px rgba(0,0,0,.04); }
+  nav .wrap { display:flex; align-items:center; justify-content:space-between; height:64px; gap:16px; }
+  nav .logo { font-weight:700; color:var(--title); }
+  nav .links a { color:var(--muted); margin-left:24px; font-weight:500; font-size:15px; }
+  header { padding:72px 0 56px; background:var(--soft); }
+  .eyebrow { display:inline-block; background:var(--chip); color:var(--title); font-size:13px; font-weight:600; padding:6px 12px; border-radius:999px; }
+  h1 { font-size:clamp(32px,5vw,46px); margin:16px 0 12px; line-height:1.15; color:var(--title); }
+  .lead { font-size:18px; color:var(--muted); max-width:720px; }
+  .btns { display:flex; align-items:center; gap:24px; flex-wrap:wrap; margin-top:28px; }
+  .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:12px; border:0; background:var(--chip); color:var(--title); font-weight:600; cursor:pointer; transition:background .15s, transform .15s, box-shadow .15s; }
+  .btn:hover { text-decoration:none; background:var(--chip-hover); transform:translateY(-1px); }
+  .btn.primary { background:var(--acc); color:#fff; box-shadow:0 4px 14px rgba(30,58,95,.25); }
+  .btn.primary:hover { background:var(--acc-hover); }
+  .arrow { font-weight:600; color:var(--link); }
+  .arrow::after { content:" →"; }
+  section { padding:64px 0; }
+  section.alt { background:transparent; }
+  h2 { font-size:28px; margin:0 0 24px; color:var(--title); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px; }
+  .stat, .card, figure { background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); }
+  @media (prefers-color-scheme: dark) { .stat, .card, figure { border-color:transparent; } }
+  .stat { padding:24px; }
+  .stat b { display:block; font-size:34px; color:var(--title); }
+  .stat span { color:var(--muted); font-size:15px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; }
+  .card { padding:24px; }
+  .card h3 { margin:0 0 8px; font-size:18px; color:var(--title); }
+  .card p { margin:0; color:var(--muted); font-size:15px; }
+  code { background:var(--code); padding:2px 6px; border-radius:6px; font-size:14px; }
+  .tags { display:flex; flex-wrap:wrap; gap:10px; }
+  .tag { background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 14px; font-size:14px; font-weight:500; }
+  .shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:20px; }
+  figure { margin:0; overflow:hidden; }
+  figure img { width:100%; display:block; aspect-ratio:16/10; object-fit:cover; object-position:top; }
+  figcaption { padding:12px 16px; color:var(--muted); font-size:14px; font-weight:500; }
+  pre { background:#0f172a; color:#e2e8f0; border:0; border-radius:16px; padding:20px; overflow:auto; font-size:14px; }
+  footer { padding:24px 0 48px; color:var(--muted); font-size:14px; }
+  @media (max-width:640px) { nav .links a { margin-left:14px; } .shots { grid-template-columns:1fr; } }
+
+  /* emulador */
+  .jogo { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:20px; align-items:start; }
+  .tela-card { padding:20px; }
+  canvas { width:100%; aspect-ratio:2/1; display:block; border-radius:12px; background:#0b0e14; image-rendering:pixelated; }
+  .barra { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:16px; }
+  .barra select, .barra .btn { height:44px; }
+  select { appearance:none; height:44px; padding:0 40px 0 14px; border-radius:12px; border:1px solid var(--line); background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M1 1l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 14px center; color:var(--title); font:inherit; font-weight:600; cursor:pointer; }
+  .barra .btn { padding:0 18px; }
+  .barra .direita { margin-left:auto; display:flex; gap:10px; align-items:center; }
+  .icone { width:44px; padding:0 !important; justify-content:center; }
+  .velocidade { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px; margin-top:14px; }
+  .velocidade input { accent-color:var(--acc); width:140px; }
+  .lado { padding:20px; }
+  .lado h3 { margin:0 0 6px; font-size:16px; color:var(--title); }
+  .lado p { margin:0 0 16px; color:var(--muted); font-size:14px; }
+  .teclado { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .teclado button { aspect-ratio:1; border:1px solid var(--line); border-radius:10px; background:var(--soft); color:var(--title); font:inherit; font-weight:700; font-size:16px; cursor:pointer; position:relative; user-select:none; -webkit-user-select:none; touch-action:none; transition:background .08s; }
+  .teclado button small { position:absolute; right:6px; bottom:4px; font-size:10px; font-weight:600; color:var(--muted); }
+  .teclado button.usada { border-color:var(--acc); }
+  .teclado button.ativa { background:var(--acc); color:#fff; }
+  .teclado button.ativa small { color:#dbe7f5; }
+  .dica { margin-top:14px; font-size:13px; color:var(--muted); }
+  .arquivo { display:none; }
+  @media (max-width:860px) { .jogo { grid-template-columns:1fr; } .barra .direita { margin-left:0; } }
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <span class="logo">Emulador CHIP-8</span>
+    <div class="links">
+      <a href="https://github.com/VitorAngN/oldCPUEmulator">GitHub</a>
+      <a href="https://vitorangn.github.io/">Portfólio</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <span class="eyebrow">Projeto autoral · C++ · WebAssembly</span>
+    <h1>Emulador CHIP-8</h1>
+    <p class="lead">Uma CPU dos anos 70 emulada do zero em C++: memória, registradores, pilha, timers e os 35 opcodes. O mesmo núcleo que roda na versão Win32 foi compilado para WebAssembly, então dá para jogar aqui mesmo.</p>
+    <div class="btns">
+      <a class="btn primary" href="#jogar">Jogar agora</a>
+      <a class="arrow" href="https://github.com/VitorAngN/oldCPUEmulator">Código no GitHub</a>
+    </div>
+  </div>
+</header>
+
+<section id="jogar">
+  <div class="wrap">
+    <div class="jogo">
+      <div class="card tela-card">
+        <canvas id="tela" width="640" height="320" aria-label="Tela do emulador"></canvas>
+        <div class="barra">
+          <select id="rom" aria-label="Escolher jogo"></select>
+          <button class="btn primary" id="pausar">Pausar</button>
+          <button class="btn" id="reiniciar">Reiniciar</button>
+          <div class="direita">
+            <button class="btn" id="abrir">Abrir .ch8</button>
+            <button class="btn icone" id="som" title="Ligar/desligar som" aria-label="Ligar ou desligar o som">🔇</button>
+          </div>
+          <input class="arquivo" type="file" id="arquivo" accept=".ch8,.c8,application/octet-stream">
+        </div>
+        <label class="velocidade">Velocidade
+          <input type="range" id="velocidade" min="2" max="30" value="10">
+          <span id="velocidade-txt">600 instruções/s</span>
+        </label>
+      </div>
+
+      <div class="card lado">
+        <h3 id="jogo-nome">Controles</h3>
+        <p id="jogo-dica">Carregando…</p>
+        <div class="teclado" id="teclado"></div>
+        <p class="dica">Use o teclado do computador (as letras no canto de cada tecla) ou toque nas teclas. Arquivos que você abrir ficam só no seu navegador.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Como funciona</h2>
+    <div class="grid">
+      <div class="card"><h3>Núcleo em C++</h3><p>A classe <code>Chip8</code> faz o ciclo de busca, decodificação e execução sem saber nada de janela ou teclado. É a mesma usada no executável para Windows.</p></div>
+      <div class="card"><h3>WebAssembly</h3><p>Uma ponte pequena (<code>web/chip8_web.cpp</code>) expõe cinco funções. O Emscripten compila tudo para <code>.wasm</code> no GitHub Actions a cada push.</p></div>
+      <div class="card"><h3>60 quadros por segundo</h3><p>O JavaScript chama um quadro por <code>requestAnimationFrame</code>: roda N instruções, atualiza os timers a 60 Hz e desenha a tela 64×32 no canvas.</p></div>
+      <div class="card"><h3>Testado</h3><p>Os opcodes têm testes automatizados que rodam no Linux com AddressSanitizer e UBSan, e no Windows com MinGW.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    João Vitor Angelim Nogueira · Engenharia de Computação (UTFPR) ·
+    <a href="https://github.com/VitorAngN">GitHub</a> ·
+    <a href="https://www.linkedin.com/in/vitorangn/">LinkedIn</a> ·
+    <a href="https://vitorangn.github.io/">Portfólio</a>
+  </div>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

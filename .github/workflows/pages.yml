@@ -1,0 +1,61 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compilar para WebAssembly e montar o site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mymindstorm/setup-emsdk@v14
+
+      - name: Compilar o núcleo (C++ → WebAssembly)
+        run: |
+          mkdir -p _site
+          em++ -std=c++17 -O2 -Iemular8hd web/chip8_web.cpp emular8hd/Chip8.cpp \
+            -sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,node \
+            -sEXPORTED_FUNCTIONS=_malloc,_free,_chip8_carregar,_chip8_quadro,_chip8_tecla,_chip8_tela,_chip8_som \
+            -sEXPORTED_RUNTIME_METHODS=cwrap,HEAPU8 \
+            -o _site/chip8.js
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Testar o build (Pong precisa desenhar na tela)
+        run: node tests/web/smoke.mjs
+
+      - name: Montar o site
+        run: |
+          cp site/index.html site/app.js _site/
+          mkdir -p _site/roms
+          cp web/roms/*.ch8 _site/roms/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Publicar
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
